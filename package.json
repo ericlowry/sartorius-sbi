@@ -1,0 +1,31 @@
+{
+  "name": "sartorius-sbi",
+  "version": "0.0.1",
+  "description": "Sartorius SBI Interface",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ericlowry/sartorius-sbi.git"
+  },
+  "keywords": [
+    "sartorius",
+    "sbi",
+    "scale",
+    "balance",
+    "serialport",
+    "node"
+  ],
+  "author": "Eric Lowry <eric@myrealms.org>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ericlowry/sartorius-sbi/issues"
+  },
+  "homepage": "https://github.com/ericlowry/sartorius-sbi#readme",
+  "dependencies": {
+    "mathjs": "^3.10.3",
+    "serialport": "^4.0.7"
+  }
+}
