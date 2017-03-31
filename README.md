@@ -1,6 +1,12 @@
 # sartorius-sbi
 Sartorius SBI Interface for NodeJS
 
+# Scales Supported
+
+- Sartorius PMA 7501
+- Sartorius PMA 7501-X
+- and others...
+
 # Usage
 
 ```javascript 1.8
@@ -34,3 +40,10 @@ scale.connect(function(err){
 });
 
 ```
+
+# Documentation
+###### Coming Soon...
+
+### Note:
+
+The author (me) is willing to add support for other Sartorius lab scales and balances, contact me if your preferred device isn't supported
