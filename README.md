@@ -11,7 +11,7 @@ Sartorius SBI Interface for NodeJS
 
 ```javascript
 
-var Scale = require('sartorius-sbi');
+var Scale = require('sartorius-sbi').Scale;
 
 var scale = new Scale({ ttyDevice: '/dev/ttyUSB0', baudRate: 9600 });
 
@@ -33,7 +33,7 @@ scale.connect( (err) => {
            if ( measure.uom === '/lb' ){
                   scale.toggle(); // switch to measuring grams
            }
-           scale.monitorWeight(); // emit a 'weight' event whenever the scale changes
+           scale.monitor(); // emit 'weight' and 'keypress' events whenever the scale changes
         });
     }); 
 });

@@ -1,7 +1,7 @@
 {
   "name": "sartorius-sbi",
   "version": "0.0.1",
-  "description": "Sartorius SBI Interface",
+  "description": "Sartorius SBI Interface for NodeJS",
   "main": "index.js",
   "scripts": {
     "test": "mocha"

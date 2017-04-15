@@ -8,6 +8,8 @@ const m = require('mathjs');
 
 const sbi = require('./lib/sbi');
 
+const AUTO_PRINT_DETECTION_TIMEOUT = 200; // milliseconds
+
 const TTY_DEFAULTS = {
 
     ttyDevice: '/dev/ttyUSB0',
@@ -33,7 +35,7 @@ const NO_RESPONSE = new Error('scale is not responding');
 // default error handler (just throws the error)
 //
 function throwIt(err){
-    if (err ){ throw new Error(err); }
+    if (err) throw new Error(err);
 }
 
 class Scale extends Emitter {
@@ -45,9 +47,6 @@ class Scale extends Emitter {
         let scale = this;
 
         scale.options = Object.assign({}, TTY_DEFAULTS, options || {});
-
-        scale.scaleType = undefined;
-        scale.serialNumber = undefined;
 
         scale.responseHandler = undefined;
 
@@ -70,9 +69,7 @@ class Scale extends Emitter {
         });
 
         if (callback) {
-            scale.open( (err) => {
-                callback( err, scale );
-            })
+            scale.open( callback );
         }
     }
 
@@ -87,27 +84,30 @@ class Scale extends Emitter {
 
         // attempt to open the scale's tty port
         scale.tty.open( (err) => {
-             if (err) { return callback(err); }
+            if (err) return callback(err);
 
-            // ask the scale for it's device info
-            scale.query(sbi.DEVICE_INFO, (err, deviceInfo) => {
-                if (err) { return callback(err); }
-                scale.deviceInfo = deviceInfo.trim();
+            let autoPrintError = () => {
+                clearTimeout(timeout);
+                scale.tty.close();
+                callback(new Error('AUTO-PRINT-ERROR'));
+            };
 
-                // ask the scale for it's serial number
-                scale.query(sbi.SERIAL_NUMBER, (err, serialNumber) => {
-                    if (err) { return callback(err); }
-                    scale.serialNumber = serialNumber.trim();
+            scale.tty.once( 'data', autoPrintError );
 
-                    // success!
+            let timeout = setTimeout( ()=>{
 
+                scale.tty.removeListener('data', autoPrintError);
+
+                scale.query( sbi.DEVICE_INFO, (err,devInfo)=> {
+                    if (err) return callback(err);
                     callback( undefined, scale );
                     scale.emit('open');
                 });
-            });
+
+            }, AUTO_PRINT_DETECTION_TIMEOUT );
+
         });
     }
-
 
     //
     // scale.close( (err) => { ... } )
@@ -187,8 +187,8 @@ class Scale extends Emitter {
         if ( !(data[0]===' '||data[0]==='+'||data[0]) ){ return callback(new Error('bad weight - wrong sign')); }
         let sign = (data[0]==='-'?-1:1);
         let weight = m.round( sign * Number( data.substring(1,11) ), this.options.precision );
-        if ( weight === NaN ){ return callback( new Error('bad weight - not a number')); }
-        let uom = data.substr(11,2).trim();
+        if ( isNaN(weight) ){ return callback( new Error('bad weight - not a number')); }
+        let uom = data.substr(11,3).trim();
         if ( !( uom === '' || uom === 'g' || uom === '/lb' )){ return callback( new Error('bad weigh - uom')); }
 
         callback( undefined, weight, uom ); // success!
@@ -210,8 +210,116 @@ class Scale extends Emitter {
     // scale.tare( (err) => { ... } )
     //
     tare( callback ){
-        this.send(sbi.TARE, callback || throwIt);
+        this.send(sbi.TARE, callback || throwIt) ;
     }
+
+    //
+    // scale.deviceInfo( (err,data) => { ... } )
+    //
+    deviceInfo( callback ){
+        this.query( sbi.DEVICE_INFO, (err,data) => {
+            if (err) return callback(err);
+            callback( undefined, data.trim() );
+        });
+    }
+
+    //
+    // serialNumber( (err,data) => { ... } )
+    //
+    serialNumber( callback ){
+        this.query( sbi.SERIAL_NUMBER, (err,data) => {
+            if (err) return callback(err);
+            callback( undefined, data.trim() );
+        });
+    }
+
+    //
+    // message( msg, (err) => { ... } )
+    //
+    message( msg, callback ){
+        this.send( sbi.MSG( msg || '' ), callback || throwIt );
+    }
+
+    //
+    // toggle( msg, (err) => { ... } )
+    //
+    toggle( msg, callback ){
+        this.send( sbi.TOGGLE_WEIGH_MODE, callback || throwIt );
+    }
+
+
+    //
+    // status( (err,statusMsg) => { ... } );
+    //
+    // where statusMsg
+    //  'disconnected' = serial port connected but a compatible scale wasn't found
+    //  'locked' = a scale is connected but it's display is locked (powered off)
+    //  'ready' = a scale is connected and receiving commands
+    //
+    status(callback = throwIt){
+        let scale = this;
+
+        // first check if the scale is connected...
+        scale.deviceInfo((err) =>{
+            if (err) return callback(undefined,'disconnected');
+
+            // we are connected to a scale, now see if it's display is locked...
+            scale.query( sbi.PRINT, (err) => {
+                if (err) return callback( undefined, 'locked' );
+                return callback( undefined, 'ready' );
+            });
+        });
+    }
+
+    //
+    // monitor( (err,poll) => { ... }, pollEvery ) // pollEvery n milliseconds for weight changes
+    //
+    // watch the scale and emit events for every change in weight, key pressed, power state, etc.
+    // calls back the interval of the monitor poll, which can be canceled with scale.cancel(poll)
+    //
+
+    monitor( callback, pollEvery = 200 ){
+
+        let scale = this;
+
+        let lastWeight = undefined;
+        let lastUom = undefined;
+
+        scale.send( sbi.LOCK_KEYBOARD, (err) => {
+            if (err) { return callback(err); }
+
+            callback(undefined, setInterval(() => {
+
+                scale.weight((err, weight, uom) => {
+
+                    if (err) scale.emit('error', err);
+
+
+                    if (!( weight === lastWeight && uom === lastUom )) {
+                        scale.emit('weight', weight, uom);
+                        lastWeight = weight;
+                        lastUom = uom;
+                    }
+
+                    scale.query(sbi.LAST_KEY_PRESS, (err, data) => {
+                        if (err) scale.emit('error', err);
+                        if ( data !== sbi.KEY.NO_KEY ) {
+                            scale.emit('key', data, sbi.KEY_LOOKUP[data]);
+                        }
+                    });
+
+                });
+
+            }, pollEvery));
+        });
+    }
+
+    cancel(poll, callback = throwIt ){
+        let scale = this;
+        clearInterval(poll);
+        scale.send( sbi.RELEASE_KEYBOARD, callback );
+    }
+
 }
 
-module.exports = Scale;
+module.exports = { Scale: Scale, TTY_DEFAULTS: TTY_DEFAULTS };
