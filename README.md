@@ -24,7 +24,7 @@ scale.on('weight', (err,measure) => {
     console.log( 'weight: ' + measure.weight + + measure.uom ); // -> "weight: 0.0g"
 });
 
-scale.connect( (err) => {
+scale.open( (err) => {
     if (err) { return console.error('Unable To Connect To Serial Port'); }
   
     // tell the scale to zero itself
@@ -45,4 +45,6 @@ scale.connect( (err) => {
 
 ### Note:
 
-The author (me) is willing to add support for other Sartorius lab scales and balances, contact me if your preferred device isn't supported
+Don't see the Sartorius Scale that you have?
+I am willing to add support for other Sartorius lab scales and balances.
+Contact me and I'll help you get it added to the supported devices list.

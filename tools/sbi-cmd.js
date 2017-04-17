@@ -1,9 +1,7 @@
 #!/usr/local/bin/node
 
-const Scale = require('..').Scale;
-const TTY_DEFAULTS = require('..').TTY_DEFAULTS;
-
-//const sbi = require('../lib/sbi');
+const Scale = require('../src').Scale;
+const TTY_DEFAULTS = require('../src').TTY_DEFAULTS;
 
 let cmd;
 let msg;
@@ -50,7 +48,7 @@ args.command('weight')
 
 args.command('toggle')
     .description('toggle the scale mode ( weight | parts/lb )')
-    .action((x)=>{
+    .action(()=>{
         cmd = 'toggle';
     });
 
@@ -63,7 +61,7 @@ args.command('message [msg]')
 
 args.command('monitor')
     .description('monitor the weight and scale keys pressed')
-    .action((x)=>{
+    .action(()=>{
         cmd = 'monitor';
     });
 
@@ -95,7 +93,7 @@ new Scale( scaleOptions, (err,scale) => {
         switch (err.message){
 
             case 'AUTO-PRINT-ERROR':
-                console.error('Please Adjust Scale "PRINT" Settings: SETUP > PRINT > MAN.W/O');
+                console.error('Please Adjust Scale "PRINT" Settings: SETUP > PRINT > MAN.AUT > MAN.W/O');
                 break;
 
             default:
@@ -175,7 +173,7 @@ new Scale( scaleOptions, (err,scale) => {
                     });
 
                     scale.on('key', (key, name) => {
-                        console.log(`key: >${key}< ${name}`);
+                        console.log(`key: ${name} ${key}`);
 
                         if (name === 'TOGGLE') {
                             scale.toggle();

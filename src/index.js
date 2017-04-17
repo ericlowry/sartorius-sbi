@@ -8,8 +8,6 @@ const m = require('mathjs');
 
 const sbi = require('./lib/sbi');
 
-const AUTO_PRINT_DETECTION_TIMEOUT = 200; // milliseconds
-
 const TTY_DEFAULTS = {
 
     ttyDevice: '/dev/ttyUSB0',
@@ -28,8 +26,6 @@ const TTY_DEFAULTS = {
     precision: 1, // decimal places
 
 };
-
-const NO_RESPONSE = new Error('scale is not responding');
 
 //
 // default error handler (just throws the error)
@@ -96,15 +92,17 @@ class Scale extends Emitter {
 
             let timeout = setTimeout( ()=>{
 
+                // auto print is not enabled
                 scale.tty.removeListener('data', autoPrintError);
 
+                // send a command to the scale, just to make sure it is really a scale
                 scale.query( sbi.DEVICE_INFO, (err,devInfo)=> {
                     if (err) return callback(err);
                     callback( undefined, scale );
                     scale.emit('open');
                 });
 
-            }, AUTO_PRINT_DETECTION_TIMEOUT );
+            }, scale.options.responseTimeout );
 
         });
     }
@@ -155,9 +153,8 @@ class Scale extends Emitter {
             let timeout = undefined;
 
             let getResponse = (data) => {
-                callback( undefined, data ); // success!
-                scale.tty.removeListener( 'data', getResponse );
                 clearTimeout(timeout);
+                callback( undefined, data ); // success!
             };
 
             timeout = setTimeout( ()=>{
@@ -165,7 +162,7 @@ class Scale extends Emitter {
                 scale.tty.removeListener( 'data', getResponse );
             }, responseTimeout || scale.options.responseTimeout ); // wait a reasonable amount of time
 
-            scale.tty.on( 'data', getResponse );
+            scale.tty.once( 'data', getResponse );
         });
     };
 
@@ -189,7 +186,7 @@ class Scale extends Emitter {
         let weight = m.round( sign * Number( data.substring(1,11) ), this.options.precision );
         if ( isNaN(weight) ){ return callback( new Error('bad weight - not a number')); }
         let uom = data.substr(11,3).trim();
-        if ( !( uom === '' || uom === 'g' || uom === '/lb' )){ return callback( new Error('bad weigh - uom')); }
+        if ( !( uom === '' || uom === 'g' || uom === '/lb' )){ return callback( new Error('bad weight - uom')); }
 
         callback( undefined, weight, uom ); // success!
 
