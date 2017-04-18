@@ -40,6 +40,11 @@ scale.open( (err) => {
 
 ```
 
+# Example applications
+
+* [sbi-cmd](https://github.com/ericlowry/sartorius-sbi-cmd) command line interface for SBI scales.
+* [sbi-httpd](https://github.com/ericlowry/sartorius-sbi-httpd) simple web interface for for SBI scales.
+
 # Documentation
 ###### Coming Soon...
 
