@@ -50,6 +50,9 @@ scale.open( (err) => {
 
 ### Note:
 
+We're back!  Sartorius sent me a PMA Evolution! Expect new features soon...
+
+
 Don't see the Sartorius Scale that you have?
 I am willing to add support for other Sartorius lab scales and balances.
 Contact me and I'll help you get it added to the supported devices list.

@@ -1,6 +1,6 @@
 {
   "name": "sartorius-sbi",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Sartorius SBI Interface for NodeJS",
   "main": "src/index.js",
   "scripts": {
@@ -25,7 +25,12 @@
   },
   "homepage": "https://github.com/ericlowry/sartorius-sbi#readme",
   "dependencies": {
+    "commander": "^5.1.0",
     "mathjs": "^3.10.3",
-    "serialport": "^4.0.7"
+    "serialport": "^9.0.0"
+  },
+  "devDependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
   }
 }
