@@ -26,11 +26,11 @@
   "homepage": "https://github.com/ericlowry/sartorius-sbi#readme",
   "dependencies": {
     "commander": "^5.1.0",
-    "mathjs": "^3.10.3",
+    "mathjs": "^10.4.2",
     "serialport": "^9.0.0"
   },
   "devDependencies": {
     "express": "^4.17.1",
-    "socket.io": "^2.3.0"
+    "socket.io": "^4.4.1"
   }
 }
